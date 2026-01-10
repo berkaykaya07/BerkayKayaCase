@@ -18,6 +18,7 @@ final class APIClient: APIClientProtocol {
     
     private let session: URLSession
     private let decoder: JSONDecoder
+    private let logger = Logger.shared
     
     init(session: URLSession = .shared) {
         self.session = session
@@ -37,36 +38,55 @@ final class APIClient: APIClientProtocol {
             }
             
             guard let url = endpoint.url() else {
+                self.logger.error("Invalid URL for endpoint: \(endpoint)")
                 observer.onError(APIError.invalidURL)
                 return Disposables.create()
             }
             
+            // Log request
+            self.logger.logRequest(url: url, method: "GET")
+            
+            let startTime = Date()
+            
             let task = self.session.dataTask(with: url) { data, response, error in
+                let duration = Date().timeIntervalSince(startTime)
+                
                 if let error = error {
+                    self.logger.error("Network error", error: error)
+                    self.logger.logResponse(url: url, statusCode: 0, data: nil, error: error)
                     observer.onError(APIError.networkError(error))
                     return
                 }
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
+                    self.logger.error("Invalid response")
                     observer.onError(APIError.invalidResponse)
                     return
                 }
                 
+                // Log response
+                self.logger.logResponse(url: url, statusCode: httpResponse.statusCode, data: data)
+                self.logger.info("⏱️ Request completed in \(String(format: "%.2f", duration))s")
+                
                 guard (200...299).contains(httpResponse.statusCode) else {
+                    self.logger.error("Server error with status code: \(httpResponse.statusCode)")
                     observer.onError(APIError.serverError(statusCode: httpResponse.statusCode))
                     return
                 }
                 
                 guard let data = data else {
+                    self.logger.error("No data received")
                     observer.onError(APIError.noData)
                     return
                 }
                 
                 do {
                     let decodedObject = try self.decoder.decode(T.self, from: data)
+                    self.logger.success("Successfully decoded \(T.self)")
                     observer.onNext(decodedObject)
                     observer.onCompleted()
                 } catch {
+                    self.logger.error("Decoding error for \(T.self)", error: error)
                     observer.onError(APIError.decodingError(error))
                 }
             }
@@ -75,6 +95,7 @@ final class APIClient: APIClientProtocol {
             
             return Disposables.create {
                 task.cancel()
+                self.logger.warning("Request cancelled: \(url)")
             }
         }
     }

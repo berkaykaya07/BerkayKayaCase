@@ -14,6 +14,7 @@ final class ProductListViewController: UIViewController {
     // MARK: - Properties
     private let viewModel = ProductListViewModel()
     private let disposeBag = DisposeBag()
+    private let storageService = StorageService.shared
     
     // MARK: - UI Components
     private let searchBar: UISearchBar = {
@@ -30,17 +31,41 @@ final class ProductListViewController: UIViewController {
         tableView.separatorStyle = .none
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 120
+        tableView.register(ProductCell.self, forCellReuseIdentifier: ProductCell.identifier)
         return tableView
     }()
     
+    private let refreshControl = UIRefreshControl()
+    
     private let loadingView = LoadingView(message: "Loading products...")
     
-    private lazy var emptyStateView = EmptyStateView(
-        image: UIImage(systemName: "magnifyingglass"),
-        title: "No Products Found",
-        message: "Try adjusting your search or filters",
-        actionTitle: "Clear Filters"
-    )
+    private let tableLoadingView: LoadingView = {
+        let view = LoadingView(message: "Searching...")
+        view.isHidden = true
+        return view
+    }()
+    
+    private let footerLoadingView: UIView = {
+        let view = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 60))
+        let spinner = UIActivityIndicatorView(style: .medium)
+        spinner.center = view.center
+        spinner.startAnimating()
+        view.addSubview(spinner)
+        return view
+    }()
+    
+    private lazy var emptyStateView: EmptyStateView = {
+        let view = EmptyStateView(
+            image: UIImage(systemName: "magnifyingglass"),
+            title: "No Products Found",
+            message: "Try adjusting your search or filters",
+            actionTitle: "Clear Filters"
+        )
+        view.actionHandler = { [weak self] in
+            self?.clearFilters()
+        }
+        return view
+    }()
     
     // MARK: - Lifecycle
     
@@ -48,6 +73,7 @@ final class ProductListViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupBindings()
+        setupKeyboardDismiss()
     }
     
     // MARK: - Setup
@@ -57,7 +83,7 @@ final class ProductListViewController: UIViewController {
         view.backgroundColor = .systemBackground
         
         // Add subviews
-        view.addSubviews(searchBar, tableView, loadingView, emptyStateView)
+        view.addSubviews(searchBar, tableView, loadingView, emptyStateView, tableLoadingView)
         
         // SearchBar constraints
         searchBar.translatesAutoresizingMaskIntoConstraints = false
@@ -80,12 +106,37 @@ final class ProductListViewController: UIViewController {
         loadingView.pinToSuperview()
         loadingView.isHidden = true
         
+        // Table Loading view
+        tableLoadingView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            tableLoadingView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
+            tableLoadingView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableLoadingView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableLoadingView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        tableLoadingView.isHidden = true
+        
         // Empty state view
-        emptyStateView.pinToSuperview()
+        emptyStateView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            emptyStateView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
+            emptyStateView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            emptyStateView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            emptyStateView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
         emptyStateView.isHidden = true
+        
+        // Refresh control
+        tableView.refreshControl = refreshControl
+        
+        // Dismiss keyboard on scroll
+        tableView.keyboardDismissMode = .onDrag
         
         // Navigation bar buttons
         setupNavigationBar()
+        
+        // SearchBar delegate
+        searchBar.delegate = self
     }
     
     private func setupNavigationBar() {
@@ -106,17 +157,276 @@ final class ProductListViewController: UIViewController {
         navigationItem.rightBarButtonItems = [filterButton, sortButton]
     }
     
+    private func setupKeyboardDismiss() {
+        // Dismiss keyboard when tapping outside
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+    }
+    
     private func setupBindings() {
-        // TODO: Will be implemented in next commit
+        // Search binding
+        searchBar.rx.text.orEmpty
+            .bind(to: viewModel.searchQuery)
+            .disposed(by: disposeBag)
+        
+        // Refresh control
+        refreshControl.rx.controlEvent(.valueChanged)
+            .do(onNext: { [weak self] in
+                // Clear search bar on refresh
+                self?.searchBar.text = ""
+                self?.viewModel.searchQuery.accept("")
+            })
+            .bind(to: viewModel.refresh)
+            .disposed(by: disposeBag)
+        
+        // Products binding
+        viewModel.products
+            .observe(on: MainScheduler.instance)
+            .bind(to: tableView.rx.items(cellIdentifier: ProductCell.identifier, cellType: ProductCell.self)) { [weak self] index, product, cell in
+                guard let self = self else { return }
+                
+                let isFavorite = self.storageService.isFavorite(product.id)
+                cell.configure(with: product, isFavorite: isFavorite)
+                
+                // Favorite button tap
+                cell.favoriteButton.rx.tap
+                    .subscribe(onNext: { [weak self] in
+                        self?.toggleFavorite(product)
+                        cell.favoriteButton.isSelected.toggle()
+                        
+                        // Haptic feedback
+                        let generator = UIImpactFeedbackGenerator(style: .medium)
+                        generator.impactOccurred()
+                    })
+                    .disposed(by: cell.disposeBag)
+                
+                // Add to cart button tap
+                cell.addToCartButton.rx.tap
+                    .subscribe(onNext: { [weak self] in
+                        self?.addToCart(product)
+                        
+                        // Haptic feedback
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.success)
+                        
+                        // Show toast
+                        self?.showToast(message: "Added to cart")
+                    })
+                    .disposed(by: cell.disposeBag)
+            }
+            .disposed(by: disposeBag)
+        
+        // Cell selection
+        tableView.rx.modelSelected(Product.self)
+            .subscribe(onNext: { [weak self] product in
+                self?.navigateToDetail(product: product)
+            })
+            .disposed(by: disposeBag)
+        
+        // Pagination - Load more when reaching bottom
+        tableView.rx.contentOffset
+            .map { [weak self] offset in
+                guard let self = self else { return false }
+                let contentHeight = self.tableView.contentSize.height
+                let scrollViewHeight = self.tableView.frame.size.height
+                let scrollPosition = offset.y + scrollViewHeight
+                return scrollPosition > contentHeight - 200
+            }
+            .distinctUntilChanged()
+            .filter { $0 }
+            .map { _ in () }
+            .bind(to: viewModel.loadNextPage)
+            .disposed(by: disposeBag)
+        
+        // Loading state
+        viewModel.isLoading
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] isLoading in
+                guard let self = self else { return }
+                
+                let hasProducts = !self.viewModel.products.value.isEmpty
+                
+                // Initial loading
+                if isLoading && !hasProducts && self.searchBar.text?.isEmpty == true {
+                    self.loadingView.isHidden = false
+                    self.loadingView.startAnimating()
+                    self.tableView.isHidden = true
+                    self.tableLoadingView.isHidden = true
+                    self.emptyStateView.isHidden = true
+                    self.tableView.tableFooterView = nil
+                }
+                // Search loading
+                else if isLoading && !hasProducts {
+                    self.loadingView.isHidden = true
+                    self.tableLoadingView.isHidden = false
+                    self.tableLoadingView.startAnimating()
+                    self.tableView.isHidden = true
+                    self.emptyStateView.isHidden = true
+                    self.tableView.tableFooterView = nil
+                }
+                // Pagination loading (footer)
+                else if isLoading && hasProducts {
+                    self.loadingView.isHidden = true
+                    self.tableLoadingView.isHidden = true
+                    self.tableView.isHidden = false
+                    self.emptyStateView.isHidden = true
+                    self.tableView.tableFooterView = self.footerLoadingView
+                }
+                // Not loading
+                else {
+                    self.loadingView.isHidden = true
+                    self.loadingView.stopAnimating()
+                    self.tableLoadingView.isHidden = true
+                    self.tableLoadingView.stopAnimating()
+                    self.tableView.tableFooterView = nil
+                  
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // Refreshing state
+        viewModel.isRefreshing
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] isRefreshing in
+                if !isRefreshing {
+                    self?.refreshControl.endRefreshing()
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // Empty state - Only show when NOT loading
+        Observable.combineLatest(
+            viewModel.isEmpty,
+            viewModel.isLoading
+        )
+        .observe(on: MainScheduler.instance)
+        .subscribe(onNext: { [weak self] isEmpty, isLoading in
+            guard let self = self else { return }
+            
+            // Show empty state only if empty AND not loading
+            if isEmpty && !isLoading {
+                self.emptyStateView.isHidden = false
+                self.tableView.isHidden = true
+            } else {
+                self.emptyStateView.isHidden = true
+                self.tableView.isHidden = false
+            }
+        })
+        .disposed(by: disposeBag)
+        
+        // Error handling
+        viewModel.error
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] error in
+                self?.showError(error)
+            })
+            .disposed(by: disposeBag)
     }
     
     // MARK: - Actions
-    
     @objc private func filterTapped() {
-        // TODO: Navigate to filter screen
+        let filterVC = FilterViewController(currentFilters: viewModel.filterOptions.value)
+        let navController = UINavigationController(rootViewController: filterVC)
+        present(navController, animated: true)
     }
     
     @objc private func sortTapped() {
-        // TODO: Show sort options
+        let alert = UIAlertController(title: "Sort By", message: nil, preferredStyle: .actionSheet)
+        
+        for option in SortOption.allCases {
+            let action = UIAlertAction(title: option.displayName, style: .default) { [weak self] _ in
+                self?.viewModel.sortOption.accept(option)
+            }
+            alert.addAction(action)
+        }
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        if let popover = alert.popoverPresentationController {
+            popover.barButtonItem = navigationItem.rightBarButtonItems?.last
+        }
+        
+        present(alert, animated: true)
+    }
+    
+    private func toggleFavorite(_ product: Product) {
+        if storageService.isFavorite(product.id) {
+            storageService.removeFromFavorites(product.id)
+        } else {
+            storageService.addToFavorites(product)
+        }
+    }
+    
+    private func addToCart(_ product: Product) {
+        storageService.addToCart(product)
+    }
+    
+    private func navigateToDetail(product: Product) {
+        let detailVC = ProductDetailViewController(product: product)
+        navigationController?.pushViewController(detailVC, animated: true)
+    }
+    
+    private func clearFilters() {
+        viewModel.filterOptions.accept(.empty)
+        searchBar.text = ""
+        viewModel.searchQuery.accept("")
+    }
+    
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
+    }
+    
+    private func showError(_ error: Error) {
+        let alert = UIAlertController(
+            title: "Error",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func showToast(message: String) {
+        let toastLabel = UILabel()
+        toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        toastLabel.textColor = .white
+        toastLabel.textAlignment = .center
+        toastLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        toastLabel.text = message
+        toastLabel.alpha = 0
+        toastLabel.layer.cornerRadius = 10
+        toastLabel.clipsToBounds = true
+        
+        view.addSubview(toastLabel)
+        toastLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            toastLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            toastLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -100),
+            toastLabel.widthAnchor.constraint(equalToConstant: 200),
+            toastLabel.heightAnchor.constraint(equalToConstant: 40)
+        ])
+        
+        UIView.animate(withDuration: 0.3, animations: {
+            toastLabel.alpha = 1
+        }) { _ in
+            UIView.animate(withDuration: 0.3, delay: 1.5, options: [], animations: {
+                toastLabel.alpha = 0
+            }) { _ in
+                toastLabel.removeFromSuperview()
+            }
+        }
+    }
+}
+
+// MARK: - UISearchBarDelegate
+extension ProductListViewController: UISearchBarDelegate {
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.resignFirstResponder()
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.resignFirstResponder()
     }
 }

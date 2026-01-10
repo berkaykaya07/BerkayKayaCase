@@ -14,9 +14,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
     private let disposeBag = DisposeBag()
     private let storageService = StorageService.shared
+    private let logger = Logger.shared
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
+        
+        logger.logLifecycle("Scene will connect to session")
         
         window = UIWindow(windowScene: windowScene)
         
@@ -25,6 +28,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.makeKeyAndVisible()
         
         setupBadgeUpdates(for: tabBarController)
+        
+        logger.logLifecycle("Scene setup completed")
     }
     
     // MARK: - TabBar Setup
@@ -65,9 +70,55 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         tabBar.viewControllers = [productsNav, favoritesNav, cartNav]
         tabBar.selectedIndex = 0
         
-        tabBar.tabBar.tintColor = .systemBlue
+        // Configure TabBar Appearance
+        configureTabBarAppearance(tabBar.tabBar)
         
         return tabBar
+    }
+    
+    private func configureTabBarAppearance(_ tabBar: UITabBar) {
+        // Create appearance object
+        let appearance = UITabBarAppearance()
+        
+        // Configure background
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .systemBackground
+        
+        // Add subtle shadow
+        appearance.shadowColor = UIColor.black.withAlphaComponent(0.1)
+        appearance.shadowImage = UIImage()
+        
+        // Configure item colors
+        appearance.stackedLayoutAppearance.normal.iconColor = .systemGray
+        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
+            .foregroundColor: UIColor.systemGray,
+            .font: UIFont.systemFont(ofSize: 10, weight: .medium)
+        ]
+        
+        appearance.stackedLayoutAppearance.selected.iconColor = .systemBlue
+        appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
+            .foregroundColor: UIColor.systemBlue,
+            .font: UIFont.systemFont(ofSize: 10, weight: .semibold)
+        ]
+        
+        // Apply appearance
+        tabBar.standardAppearance = appearance
+        tabBar.scrollEdgeAppearance = appearance
+        
+        if #available(iOS 15.0, *) {
+            tabBar.scrollEdgeAppearance = appearance
+        }
+        
+        // Additional styling
+        tabBar.tintColor = .systemBlue
+        tabBar.unselectedItemTintColor = .systemGray
+        tabBar.isTranslucent = false
+        
+        // Add top border for visual separation
+        tabBar.layer.shadowColor = UIColor.black.cgColor
+        tabBar.layer.shadowOffset = CGSize(width: 0, height: -1)
+        tabBar.layer.shadowOpacity = 0.1
+        tabBar.layer.shadowRadius = 0
     }
     
     // MARK: - Badge Updates
@@ -97,35 +148,5 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             })
             .disposed(by: disposeBag)
     }
-
-    func sceneDidDisconnect(_ scene: UIScene) {
-        // Called as the scene is being released by the system.
-        // This occurs shortly after the scene enters the background, or when its session is discarded.
-        // Release any resources associated with this scene that can be re-created the next time the scene connects.
-        // The scene may re-connect later, as its session was not necessarily discarded (see `application:didDiscardSceneSessions` instead).
-    }
-
-    func sceneDidBecomeActive(_ scene: UIScene) {
-        // Called when the scene has moved from an inactive state to an active state.
-        // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
-    }
-
-    func sceneWillResignActive(_ scene: UIScene) {
-        // Called when the scene will move from an active state to an inactive state.
-        // This may occur due to temporary interruptions (ex. an incoming phone call).
-    }
-
-    func sceneWillEnterForeground(_ scene: UIScene) {
-        // Called as the scene transitions from the background to the foreground.
-        // Use this method to undo the changes made on entering the background.
-    }
-
-    func sceneDidEnterBackground(_ scene: UIScene) {
-        // Called as the scene transitions from the foreground to the background.
-        // Use this method to save data, release shared resources, and store enough scene-specific state information
-        // to restore the scene back to its current state.
-    }
-
-
 }
 

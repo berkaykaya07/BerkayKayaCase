@@ -33,6 +33,7 @@ final class StorageService: StorageServiceProtocol {
     private let userDefaults = UserDefaults.standard
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+    private let logger = Logger.shared
     
     init() {
         loadCart()
@@ -46,8 +47,10 @@ final class StorageService: StorageServiceProtocol {
         
         if let index = currentCart.firstIndex(where: { $0.product.id == product.id }) {
             currentCart[index].quantity += 1
+            logger.logStorage("Updated cart quantity for '\(product.title)' - new quantity: \(currentCart[index].quantity)")
         } else {
             currentCart.append(CartItem(product: product, quantity: 1))
+            logger.logStorage("Added '\(product.title)' to cart")
         }
         
         cart.accept(currentCart)
@@ -56,6 +59,9 @@ final class StorageService: StorageServiceProtocol {
     
     func removeFromCart(_ productId: Int) {
         var currentCart = cart.value
+        if let item = currentCart.first(where: { $0.product.id == productId }) {
+            logger.logStorage("Removed '\(item.product.title)' from cart")
+        }
         currentCart.removeAll { $0.product.id == productId }
         cart.accept(currentCart)
         saveCart()
@@ -67,7 +73,9 @@ final class StorageService: StorageServiceProtocol {
         if let index = currentCart.firstIndex(where: { $0.product.id == productId }) {
             if quantity > 0 {
                 currentCart[index].quantity = quantity
+                logger.logStorage("Updated cart quantity for '\(currentCart[index].product.title)' to \(quantity)")
             } else {
+                logger.logStorage("Removed '\(currentCart[index].product.title)' from cart (quantity = 0)")
                 currentCart.remove(at: index)
             }
         }
@@ -77,6 +85,7 @@ final class StorageService: StorageServiceProtocol {
     }
     
     func clearCart() {
+        logger.logStorage("Cleared entire cart (\(cart.value.count) items)")
         cart.accept([])
         saveCart()
     }
@@ -84,6 +93,7 @@ final class StorageService: StorageServiceProtocol {
     private func saveCart() {
         if let encoded = try? encoder.encode(cart.value) {
             userDefaults.set(encoded, forKey: Constants.StorageKey.cart)
+            logger.logStorage("Cart saved to UserDefaults")
         }
     }
     
@@ -91,6 +101,7 @@ final class StorageService: StorageServiceProtocol {
         if let data = userDefaults.data(forKey: Constants.StorageKey.cart),
            let decoded = try? decoder.decode([CartItem].self, from: data) {
             cart.accept(decoded)
+            logger.logStorage("Cart loaded from UserDefaults (\(decoded.count) items)")
         }
     }
     
@@ -103,11 +114,15 @@ final class StorageService: StorageServiceProtocol {
             currentFavorites.append(product)
             favorites.accept(currentFavorites)
             saveFavorites()
+            logger.logStorage("Added '\(product.title)' to favorites")
         }
     }
     
     func removeFromFavorites(_ productId: Int) {
         var currentFavorites = favorites.value
+        if let product = currentFavorites.first(where: { $0.id == productId }) {
+            logger.logStorage("Removed '\(product.title)' from favorites")
+        }
         currentFavorites.removeAll { $0.id == productId }
         favorites.accept(currentFavorites)
         saveFavorites()
@@ -120,6 +135,7 @@ final class StorageService: StorageServiceProtocol {
     private func saveFavorites() {
         if let encoded = try? encoder.encode(favorites.value) {
             userDefaults.set(encoded, forKey: Constants.StorageKey.favorites)
+            logger.logStorage("Favorites saved to UserDefaults")
         }
     }
     
@@ -127,6 +143,7 @@ final class StorageService: StorageServiceProtocol {
         if let data = userDefaults.data(forKey: Constants.StorageKey.favorites),
            let decoded = try? decoder.decode([Product].self, from: data) {
             favorites.accept(decoded)
+            logger.logStorage("Favorites loaded from UserDefaults (\(decoded.count) items)")
         }
     }
 }

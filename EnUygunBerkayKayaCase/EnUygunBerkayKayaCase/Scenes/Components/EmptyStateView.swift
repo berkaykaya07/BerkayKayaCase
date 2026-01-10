@@ -76,29 +76,29 @@ final class EmptyStateView: UIView {
         addSubviews(imageView, titleLabel, messageLabel, actionButton)
         
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.setSize(CGSize(width: 120, height: 120))
+        imageView.setSize(CGSize(width: 100, height: 100))
         NSLayoutConstraint.activate([
             imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            imageView.centerYAnchor.constraint(equalTo: centerYAnchor, constant: -80)
+            imageView.topAnchor.constraint(equalTo: topAnchor, constant: 60)
         ])
         
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 24),
+            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 20),
             titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 32),
             titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -32)
         ])
         
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
+            messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
             messageLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 32),
             messageLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -32)
         ])
         
         actionButton.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            actionButton.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 24),
+            actionButton.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 20),
             actionButton.centerXAnchor.constraint(equalTo: centerXAnchor),
             actionButton.widthAnchor.constraint(equalToConstant: 200),
             actionButton.heightAnchor.constraint(equalToConstant: 50)

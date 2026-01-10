@@ -40,6 +40,30 @@ final class ProductDetailViewModel {
     // MARK: - Setup
     
     private func setupBindings() {
-        // TODO: Will be implemented in next commit
+        // Add to cart
+        addToCart
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                let product = self.product.value
+                self.storageService.addToCart(product)
+                Logger.shared.logUserAction("Product added to cart: \(product.title)")
+            })
+            .disposed(by: disposeBag)
+        
+        // Toggle favorite
+        toggleFavorite
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                let product = self.product.value
+                
+                if self.storageService.isFavorite(product.id) {
+                    self.storageService.removeFromFavorites(product.id)
+                    Logger.shared.logUserAction("Product removed from favorites: \(product.title)")
+                } else {
+                    self.storageService.addToFavorites(product)
+                    Logger.shared.logUserAction("Product added to favorites: \(product.title)")
+                }
+            })
+            .disposed(by: disposeBag)
     }
 }

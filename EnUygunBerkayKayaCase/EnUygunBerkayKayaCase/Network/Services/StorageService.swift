@@ -14,8 +14,8 @@ protocol StorageServiceProtocol {
     var favorites: BehaviorRelay<[Product]> { get }
     
     func addToCart(_ product: Product)
-    func removeFromCart(_ productId: Int)
-    func updateCartItemQuantity(_ productId: Int, quantity: Int)
+    func removeFromCart(productId: Int)
+    func updateCartItemQuantity(productId: Int, quantity: Int)
     func clearCart()
     
     func addToFavorites(_ product: Product)
@@ -57,7 +57,7 @@ final class StorageService: StorageServiceProtocol {
         saveCart()
     }
     
-    func removeFromCart(_ productId: Int) {
+    func removeFromCart(productId: Int) {
         var currentCart = cart.value
         if let item = currentCart.first(where: { $0.product.id == productId }) {
             logger.logStorage("Removed '\(item.product.title)' from cart")
@@ -67,7 +67,7 @@ final class StorageService: StorageServiceProtocol {
         saveCart()
     }
     
-    func updateCartItemQuantity(_ productId: Int, quantity: Int) {
+    func updateCartItemQuantity(productId: Int, quantity: Int) {
         var currentCart = cart.value
         
         if let index = currentCart.firstIndex(where: { $0.product.id == productId }) {

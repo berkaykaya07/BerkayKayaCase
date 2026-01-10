@@ -6,17 +6,96 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
-
+    private let disposeBag = DisposeBag()
+    private let storageService = StorageService.shared
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        guard let _ = (scene as? UIWindowScene) else { return }
+        guard let windowScene = (scene as? UIWindowScene) else { return }
+        
+        window = UIWindow(windowScene: windowScene)
+        
+        let tabBarController = createTabBarController()
+        window?.rootViewController = tabBarController
+        window?.makeKeyAndVisible()
+        
+        setupBadgeUpdates(for: tabBarController)
+    }
+    
+    // MARK: - TabBar Setup
+    
+    private func createTabBarController() -> UITabBarController {
+        let tabBar = UITabBarController()
+        
+        // Product List Tab
+        let productsVC = ProductListViewController()
+        let productsNav = UINavigationController(rootViewController: productsVC)
+        productsNav.tabBarItem = UITabBarItem(
+            title: "Products",
+            image: UIImage(systemName: "house"),
+            selectedImage: UIImage(systemName: "house.fill")
+        )
+        productsNav.navigationBar.prefersLargeTitles = true
+        
+        // Favorites Tab
+        let favoritesVC = FavoritesViewController()
+        let favoritesNav = UINavigationController(rootViewController: favoritesVC)
+        favoritesNav.tabBarItem = UITabBarItem(
+            title: "Favorites",
+            image: UIImage(systemName: "heart"),
+            selectedImage: UIImage(systemName: "heart.fill")
+        )
+        favoritesNav.navigationBar.prefersLargeTitles = true
+        
+        // Cart Tab
+        let cartVC = CartViewController()
+        let cartNav = UINavigationController(rootViewController: cartVC)
+        cartNav.tabBarItem = UITabBarItem(
+            title: "Cart",
+            image: UIImage(systemName: "cart"),
+            selectedImage: UIImage(systemName: "cart.fill")
+        )
+        cartNav.navigationBar.prefersLargeTitles = true
+        
+        tabBar.viewControllers = [productsNav, favoritesNav, cartNav]
+        tabBar.selectedIndex = 0
+        
+        tabBar.tabBar.tintColor = .systemBlue
+        
+        return tabBar
+    }
+    
+    // MARK: - Badge Updates
+    
+    private func setupBadgeUpdates(for tabBarController: UITabBarController) {
+        storageService.favorites
+            .map { $0.count }
+            .map { count -> String? in
+                count > 0 ? "\(count)" : nil
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak tabBarController] badgeValue in
+                tabBarController?.viewControllers?[1].tabBarItem.badgeValue = badgeValue
+            })
+            .disposed(by: disposeBag)
+        
+        storageService.cart
+            .map { items -> Int in
+                items.reduce(0) { $0 + $1.quantity }
+            }
+            .map { count -> String? in
+                count > 0 ? "\(count)" : nil
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak tabBarController] badgeValue in
+                tabBarController?.viewControllers?[2].tabBarItem.badgeValue = badgeValue
+            })
+            .disposed(by: disposeBag)
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

@@ -394,7 +394,7 @@ final class ProductDetailViewController: UIViewController {
         brandLabel.text = product.brand
         categoryLabel.text = "• \(product.category.capitalized)"
         ratingLabel.text = String(format: "%.1f", product.rating)
-        priceLabel.text = "$\(product.price.formatted())"
+        priceLabel.text = String(format: "$%.2f", product.discountedPrice) // Use discounted price
         descriptionLabel.text = product.description
         
         // Stock
@@ -411,10 +411,9 @@ final class ProductDetailViewController: UIViewController {
         
         // Discount
         if product.discountPercentage > 0 {
-            let originalPrice = product.price / (1 - product.discountPercentage / 100)
-            
+            // Show original price with strikethrough
             let attributedString = NSAttributedString(
-                string: "$\(originalPrice.formatted())",
+                string: String(format: "$%.2f", product.price),
                 attributes: [.strikethroughStyle: NSUnderlineStyle.single.rawValue]
             )
             originalPriceLabel.attributedText = attributedString

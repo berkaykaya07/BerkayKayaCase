@@ -157,7 +157,7 @@ final class CartViewController: UIViewController {
         viewModel.totalPrice
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] total in
-                self?.totalLabel.text = "Total: $\(total.formatted())"
+                self?.totalLabel.text = String(format: "Total: $%.2f", total)
             })
             .disposed(by: disposeBag)
         

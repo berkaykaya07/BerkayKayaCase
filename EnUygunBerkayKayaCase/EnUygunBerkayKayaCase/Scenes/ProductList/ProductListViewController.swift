@@ -193,7 +193,6 @@ final class ProductListViewController: UIViewController {
                 cell.favoriteButton.rx.tap
                     .subscribe(onNext: { [weak self] in
                         self?.toggleFavorite(product)
-                        cell.favoriteButton.isSelected.toggle()
                         
                         // Haptic feedback
                         let generator = UIImpactFeedbackGenerator(style: .medium)
@@ -361,6 +360,14 @@ final class ProductListViewController: UIViewController {
                 Logger.shared.logUserAction("Filter button updated - Active: \(options.isActive)")
             })
             .disposed(by: disposeBag)
+        
+        storageService.favorites
+            .skip(1) 
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.updateVisibleCellsFavoriteState()
+            })
+            .disposed(by: disposeBag)
     }
     
     // MARK: - Actions
@@ -517,6 +524,17 @@ final class ProductListViewController: UIViewController {
             // Default icon when no filter
             filterButton.image = UIImage(systemName: "line.3.horizontal.decrease.circle")
             filterButton.tintColor = .systemBlue
+        }
+    }
+    
+    private func updateVisibleCellsFavoriteState() {
+        for indexPath in tableView.indexPathsForVisibleRows ?? [] {
+            guard let cell = tableView.cellForRow(at: indexPath) as? ProductCell else { continue }
+            guard indexPath.row < viewModel.products.value.count else { continue }
+            
+            let product = viewModel.products.value[indexPath.row]
+            let isFavorite = storageService.isFavorite(product.id)
+            cell.favoriteButton.isSelected = isFavorite
         }
     }
 }

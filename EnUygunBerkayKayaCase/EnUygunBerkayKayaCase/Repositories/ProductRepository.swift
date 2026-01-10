@@ -9,9 +9,9 @@ import Foundation
 import RxSwift
 
 protocol ProductRepositoryProtocol {
-    func getProducts(limit: Int, skip: Int) -> Observable<[Product]>
+    func getProducts(limit: Int, skip: Int, sortBy: String?, order: String?) -> Observable<[Product]>
     func getProductDetail(id: Int) -> Observable<Product>
-    func searchProducts(query: String) -> Observable<[Product]>
+    func searchProducts(query: String, sortBy: String?, order: String?) -> Observable<[Product]>
     func getCategories() -> Observable<[String]>
     func getProductsByCategory(category: String) -> Observable<[Product]>
 }
@@ -24,8 +24,8 @@ final class ProductRepository: ProductRepositoryProtocol {
         self.productService = productService
     }
     
-    func getProducts(limit: Int, skip: Int) -> Observable<[Product]> {
-        return productService.fetchProducts(limit: limit, skip: skip)
+    func getProducts(limit: Int, skip: Int, sortBy: String? = nil, order: String? = nil) -> Observable<[Product]> {
+        return productService.fetchProducts(limit: limit, skip: skip, sortBy: sortBy, order: order)
             .map { $0.products }
     }
     
@@ -34,8 +34,8 @@ final class ProductRepository: ProductRepositoryProtocol {
             .map { $0.toProduct() }
     }
     
-    func searchProducts(query: String) -> Observable<[Product]> {
-        return productService.searchProducts(query: query)
+    func searchProducts(query: String, sortBy: String? = nil, order: String? = nil) -> Observable<[Product]> {
+        return productService.searchProducts(query: query, sortBy: sortBy, order: order)
             .map { $0.products }
     }
     

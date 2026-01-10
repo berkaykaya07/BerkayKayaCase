@@ -322,23 +322,97 @@ final class ProductListViewController: UIViewController {
                 self?.showError(error)
             })
             .disposed(by: disposeBag)
+        
+        // Sort option changes - Update UI and clear search
+        viewModel.sortOption
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] option in
+                guard let self = self else { return }
+                
+                // Update sort button icon
+                self.updateSortButton(isActive: option != nil)
+                
+                // Clear search when sort changes
+                if !self.searchBar.text.isNullOrEmpty {
+                    self.searchBar.text = ""
+                    self.viewModel.searchQuery.accept("")
+                    Logger.shared.logUserAction("Search cleared due to sort change")
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // Filter option changes - Update UI and clear search
+        viewModel.filterOptions
+            .skip(1) // Skip initial value
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] options in
+                guard let self = self else { return }
+                
+                // Update filter button icon
+                self.updateFilterButton(isActive: options.isActive)
+                
+                // Clear search when filter changes (like sort behavior)
+                if !self.searchBar.text.isNullOrEmpty {
+                    self.searchBar.text = ""
+                    self.viewModel.searchQuery.accept("")
+                    Logger.shared.logUserAction("Search cleared due to filter change")
+                }
+                
+                Logger.shared.logUserAction("Filter button updated - Active: \(options.isActive)")
+            })
+            .disposed(by: disposeBag)
     }
     
     // MARK: - Actions
     @objc private func filterTapped() {
         let filterVC = FilterViewController(currentFilters: viewModel.filterOptions.value)
+        filterVC.onFiltersApplied = { [weak self] filterOptions in
+            self?.viewModel.filterOptions.accept(filterOptions)
+            Logger.shared.logUserAction("Filters applied from ProductList")
+        }
         let navController = UINavigationController(rootViewController: filterVC)
+        navController.modalPresentationStyle = .pageSheet
+        
+        if let sheet = navController.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+        
         present(navController, animated: true)
     }
     
     @objc private func sortTapped() {
-        let alert = UIAlertController(title: "Sort By", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: "Sort By", message: "Choose sorting option", preferredStyle: .actionSheet)
         
         for option in SortOption.allCases {
+            let isSelected = viewModel.sortOption.value == option
             let action = UIAlertAction(title: option.displayName, style: .default) { [weak self] _ in
-                self?.viewModel.sortOption.accept(option)
+                guard let self = self else { return }
+                self.viewModel.sortOption.accept(option)
+                
+                // Log user action
+                Logger.shared.logUserAction("Sort selected: \(option.displayName)")
+                
+                // Haptic feedback
+                let generator = UIImpactFeedbackGenerator(style: .medium)
+                generator.impactOccurred()
             }
+            
+            // Add checkmark if currently selected
+            if isSelected {
+                action.setValue(true, forKey: "checked")
+            }
+            
             alert.addAction(action)
+        }
+        
+        // Add "Clear Sort" option if sort is active
+        if viewModel.sortOption.value != nil {
+            let clearAction = UIAlertAction(title: "Clear Sort", style: .destructive) { [weak self] _ in
+                self?.viewModel.sortOption.accept(nil)
+                Logger.shared.logUserAction("Sort cleared")
+            }
+            alert.addAction(clearAction)
         }
         
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
@@ -415,6 +489,34 @@ final class ProductListViewController: UIViewController {
             }) { _ in
                 toastLabel.removeFromSuperview()
             }
+        }
+    }
+    
+    private func updateSortButton(isActive: Bool) {
+        guard let sortButton = navigationItem.rightBarButtonItems?.last else { return }
+        
+        if isActive {
+            // Change to filled icon when sort is active
+            sortButton.image = UIImage(systemName: "arrow.up.arrow.down.circle.fill")
+            sortButton.tintColor = .systemBlue
+        } else {
+            // Default icon when no sort
+            sortButton.image = UIImage(systemName: "arrow.up.arrow.down")
+            sortButton.tintColor = .systemBlue
+        }
+    }
+    
+    private func updateFilterButton(isActive: Bool) {
+        guard let filterButton = navigationItem.rightBarButtonItems?.first else { return }
+        
+        if isActive {
+            // Change to filled icon when filter is active
+            filterButton.image = UIImage(systemName: "line.3.horizontal.decrease.circle.fill")
+            filterButton.tintColor = .systemBlue
+        } else {
+            // Default icon when no filter
+            filterButton.image = UIImage(systemName: "line.3.horizontal.decrease.circle")
+            filterButton.tintColor = .systemBlue
         }
     }
 }

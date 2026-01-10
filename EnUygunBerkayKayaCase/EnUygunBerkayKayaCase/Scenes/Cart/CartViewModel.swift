@@ -46,6 +46,31 @@ final class CartViewModel {
     
     // MARK: - Setup
     private func setupBindings() {
-      
+        // Update quantity
+        updateQuantity
+            .subscribe(onNext: { [weak self] productId, quantity in
+                guard let self = self else { return }
+                self.storageService.updateCartItemQuantity(productId: productId, quantity: quantity)
+                Logger.shared.logUserAction("Cart item quantity updated: \(productId) -> \(quantity)")
+            })
+            .disposed(by: disposeBag)
+        
+        // Remove item
+        removeItem
+            .subscribe(onNext: { [weak self] productId in
+                guard let self = self else { return }
+                self.storageService.removeFromCart(productId: productId)
+                Logger.shared.logUserAction("Item removed from cart: \(productId)")
+            })
+            .disposed(by: disposeBag)
+        
+        // Clear cart
+        clearCart
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                self.storageService.clearCart()
+                Logger.shared.logUserAction("Cart cleared")
+            })
+            .disposed(by: disposeBag)
     }
 }

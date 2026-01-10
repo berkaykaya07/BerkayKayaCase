@@ -7,30 +7,19 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
 
 final class CheckoutViewController: UIViewController {
     
     // MARK: - Properties
-    private let viewModel: CheckoutViewModel
+    private let viewModel = CheckoutViewModel()
     private let disposeBag = DisposeBag()
-    
-    // MARK: - Initialization
-    
-    init(cartItems: [CartItem], totalAmount: Double) {
-        self.viewModel = CheckoutViewModel(cartItems: cartItems, totalAmount: totalAmount)
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
     
     // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupBindings()
     }
     
     // MARK: - Setup
@@ -39,10 +28,19 @@ final class CheckoutViewController: UIViewController {
         title = "Checkout"
         view.backgroundColor = .systemBackground
         
-        // TODO: Will be implemented in next commit
-    }
-    
-    private func setupBindings() {
-        // TODO: Will be implemented in next commit
+        // TODO: Will be implemented
+        let label = UILabel()
+        label.text = "Checkout Screen\n(Coming Soon)"
+        label.numberOfLines = 0
+        label.textAlignment = .center
+        label.font = .systemFont(ofSize: 24, weight: .bold)
+        label.textColor = .secondaryLabel
+        
+        view.addSubview(label)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
     }
 }

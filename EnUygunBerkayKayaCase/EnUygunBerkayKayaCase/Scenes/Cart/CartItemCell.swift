@@ -243,11 +243,13 @@ final class CartItemCell: UITableViewCell {
         stockLimit = cartItem.product.stock
         
         titleLabel.text = cartItem.product.title
-        priceLabel.text = "$\(cartItem.product.price.formatted())"
+        
+        let pricePerUnit = cartItem.totalPrice / Double(cartItem.quantity)
+        priceLabel.text = String(format: "$%.2f", pricePerUnit)
         quantityLabel.text = "\(cartItem.quantity)"
         
-        let subtotal = cartItem.product.price * Double(cartItem.quantity)
-        subtotalLabel.text = "$\(subtotal.formatted())"
+        // Subtotal is already correct (uses cartItem.totalPrice)
+        subtotalLabel.text = String(format: "$%.2f", cartItem.totalPrice)
         
         // Update button states
         decreaseButton.isEnabled = currentQuantity > 1

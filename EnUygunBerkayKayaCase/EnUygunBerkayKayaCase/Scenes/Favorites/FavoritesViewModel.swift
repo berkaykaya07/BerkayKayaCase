@@ -13,6 +13,7 @@ final class FavoritesViewModel {
     
     // MARK: - Inputs
     let removeFavorite = PublishSubject<Int>()
+    let addToCart = PublishSubject<Product>()
     
     // MARK: - Outputs
     let favorites: Observable<[Product]>
@@ -39,6 +40,22 @@ final class FavoritesViewModel {
     // MARK: - Setup
     
     private func setupBindings() {
-        // TODO: Will be implemented in next commit
+        // Remove from favorites
+        removeFavorite
+            .subscribe(onNext: { [weak self] productId in
+                guard let self = self else { return }
+                self.storageService.removeFromFavorites(productId)
+                Logger.shared.logUserAction("Product removed from favorites: \(productId)")
+            })
+            .disposed(by: disposeBag)
+        
+        // Add to cart
+        addToCart
+            .subscribe(onNext: { [weak self] product in
+                guard let self = self else { return }
+                self.storageService.addToCart(product)
+                Logger.shared.logUserAction("Product added to cart from favorites: \(product.title)")
+            })
+            .disposed(by: disposeBag)
     }
 }

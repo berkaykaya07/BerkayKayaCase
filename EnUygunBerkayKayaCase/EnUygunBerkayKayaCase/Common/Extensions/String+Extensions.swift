@@ -18,3 +18,9 @@ extension String {
         return self.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
+
+extension Optional where Wrapped == String {
+    var isNullOrEmpty: Bool {
+        return self?.isEmpty ?? true
+    }
+}

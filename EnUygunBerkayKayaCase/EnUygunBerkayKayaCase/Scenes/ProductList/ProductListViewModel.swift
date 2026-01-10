@@ -97,15 +97,32 @@ final class ProductListViewModel {
         canLoadMore = true
         
         let skip = currentPage * pageSize
+        let sortBy = sortOption.value?.sortBy
+        let order = sortOption.value?.order
+        let category = filterOptions.value.category
         
-        repository.getProducts(limit: pageSize, skip: skip)
+        let request: Observable<[Product]>
+        if let category = category {
+            request = repository.getProductsByCategory(category: category)
+                .map { products in
+                    if let sortBy = sortBy {
+                        return self.sortProducts(products, by: sortBy, order: order ?? "asc")
+                    }
+                    return products
+                }
+        } else {
+            request = repository.getProducts(limit: pageSize, skip: skip, sortBy: sortBy, order: order)
+        }
+        
+        request
             .observe(on: MainScheduler.instance)
             .subscribe(
                 onNext: { [weak self] products in
                     guard let self = self else { return }
                     self.products.accept(products)
                     self.isEmpty.accept(products.isEmpty)
-                    self.canLoadMore = products.count == self.pageSize
+                    
+                    self.canLoadMore = category == nil && products.count == self.pageSize
                     self.isLoading.accept(false)
                 },
                 onError: { [weak self] error in
@@ -121,12 +138,16 @@ final class ProductListViewModel {
     private func loadNextPageProducts() {
         guard canLoadMore, !isLoading.value else { return }
         
+        guard filterOptions.value.category == nil else { return }
+        
         isLoading.accept(true)
         currentPage += 1
         
         let skip = currentPage * pageSize
+        let sortBy = sortOption.value?.sortBy
+        let order = sortOption.value?.order
         
-        repository.getProducts(limit: pageSize, skip: skip)
+        repository.getProducts(limit: pageSize, skip: skip, sortBy: sortBy, order: order)
             .observe(on: MainScheduler.instance)
             .subscribe(
                 onNext: { [weak self] newProducts in
@@ -153,15 +174,31 @@ final class ProductListViewModel {
         canLoadMore = true
         
         let skip = currentPage * pageSize
+        let sortBy = sortOption.value?.sortBy
+        let order = sortOption.value?.order
+        let category = filterOptions.value.category
         
-        repository.getProducts(limit: pageSize, skip: skip)
+        let request: Observable<[Product]>
+        if let category = category {
+            request = repository.getProductsByCategory(category: category)
+                .map { products in
+                    if let sortBy = sortBy {
+                        return self.sortProducts(products, by: sortBy, order: order ?? "asc")
+                    }
+                    return products
+                }
+        } else {
+            request = repository.getProducts(limit: pageSize, skip: skip, sortBy: sortBy, order: order)
+        }
+        
+        request
             .observe(on: MainScheduler.instance)
             .subscribe(
                 onNext: { [weak self] products in
                     guard let self = self else { return }
                     self.products.accept(products)
                     self.isEmpty.accept(products.isEmpty)
-                    self.canLoadMore = products.count == self.pageSize
+                    self.canLoadMore = category == nil && products.count == self.pageSize
                     self.isRefreshing.accept(false)
                 },
                 onError: { [weak self] error in
@@ -183,7 +220,19 @@ final class ProductListViewModel {
         currentPage = 0
         canLoadMore = false
         
-        repository.searchProducts(query: query)
+        let sortBy = sortOption.value?.sortBy
+        let order = sortOption.value?.order
+        let category = filterOptions.value.category
+        
+        repository.searchProducts(query: query, sortBy: sortBy, order: order)
+            .map { products in
+
+                if let category = category {
+                    Logger.shared.logUserAction("Search with category filter: \(category)")
+                    return products.filter { $0.category == category }
+                }
+                return products
+            }
             .observe(on: MainScheduler.instance)
             .subscribe(
                 onNext: { [weak self] products in
@@ -199,5 +248,22 @@ final class ProductListViewModel {
                 }
             )
             .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func sortProducts(_ products: [Product], by sortBy: String, order: String) -> [Product] {
+        return products.sorted { product1, product2 in
+            switch sortBy {
+            case "title":
+                return order == "asc" ? product1.title < product2.title : product1.title > product2.title
+            case "price":
+                return order == "asc" ? product1.price < product2.price : product1.price > product2.price
+            case "rating":
+                return order == "asc" ? product1.rating < product2.rating : product1.rating > product2.rating
+            default:
+                return true
+            }
+        }
     }
 }

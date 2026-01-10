@@ -8,10 +8,9 @@
 import Foundation
 
 enum APIEndpoint {
-    case products(limit: Int, skip: Int)
+    case products(limit: Int, skip: Int, sortBy: String? = nil, order: String? = nil)
     case productDetail(id: Int)
-    case searchProducts(query: String)
-    case sortProducts(sortBy: String, order: String)
+    case searchProducts(query: String, sortBy: String? = nil, order: String? = nil)
     case categories
     case categoryList
     case productsByCategory(category: String)
@@ -24,8 +23,6 @@ enum APIEndpoint {
             return "/products/\(id)"
         case .searchProducts:
             return "/products/search"
-        case .sortProducts:
-            return "/products"
         case .categories:
             return "/products/categories"
         case .categoryList:
@@ -37,18 +34,29 @@ enum APIEndpoint {
     
     var queryItems: [URLQueryItem]? {
         switch self {
-        case .products(let limit, let skip):
-            return [
+        case .products(let limit, let skip, let sortBy, let order):
+            var items = [
                 URLQueryItem(name: "limit", value: "\(limit)"),
                 URLQueryItem(name: "skip", value: "\(skip)")
             ]
-        case .searchProducts(let query):
-            return [URLQueryItem(name: "q", value: query)]
-        case .sortProducts(let sortBy, let order):
-            return [
-                URLQueryItem(name: "sortBy", value: sortBy),
-                URLQueryItem(name: "order", value: order)
-            ]
+            if let sortBy = sortBy {
+                items.append(URLQueryItem(name: "sortBy", value: sortBy))
+            }
+            if let order = order {
+                items.append(URLQueryItem(name: "order", value: order))
+            }
+            return items
+            
+        case .searchProducts(let query, let sortBy, let order):
+            var items = [URLQueryItem(name: "q", value: query)]
+            if let sortBy = sortBy {
+                items.append(URLQueryItem(name: "sortBy", value: sortBy))
+            }
+            if let order = order {
+                items.append(URLQueryItem(name: "order", value: order))
+            }
+            return items
+            
         default:
             return nil
         }

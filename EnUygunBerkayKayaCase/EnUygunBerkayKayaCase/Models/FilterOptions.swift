@@ -9,17 +9,13 @@ import Foundation
 
 struct FilterOptions {
     var category: String?
-    var minPrice: Double?
-    var maxPrice: Double?
-    var minRating: Double?
-    var inStock: Bool = false
     
     var isActive: Bool {
-        category != nil || minPrice != nil || maxPrice != nil || minRating != nil || inStock
+        category != nil
     }
     
     static var empty: FilterOptions {
-        FilterOptions()
+        FilterOptions(category: nil)
     }
 }
 

@@ -422,16 +422,25 @@ final class CheckoutViewController: UIViewController {
     }
     
     private func createPaymentMethodButton(for method: PaymentMethod) -> UIButton {
-        let button = UIButton(type: .system)
-        button.setTitle("  \(method.rawValue)", for: .normal)
-        button.setImage(UIImage(systemName: method.icon), for: .normal)
+        var configuration = UIButton.Configuration.plain()
+        configuration.title = method.rawValue
+        configuration.image = UIImage(systemName: method.icon)
+        configuration.imagePlacement = .leading
+        configuration.imagePadding = 8
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
+        configuration.baseForegroundColor = .label
+        configuration.background.backgroundColor = .secondarySystemBackground
+        configuration.background.cornerRadius = 12
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 16, weight: .medium)
+            return outgoing
+        }
+        
+        let button = UIButton(configuration: configuration)
         button.contentHorizontalAlignment = .left
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-        button.backgroundColor = .secondarySystemBackground
-        button.layer.cornerRadius = 12
         button.layer.borderWidth = 2
         button.layer.borderColor = UIColor.clear.cgColor
-        button.contentEdgeInsets = UIEdgeInsets(top: 12, left: 16, bottom: 12, right: 16)
         button.tag = PaymentMethod.allCases.firstIndex(of: method) ?? 0
         return button
     }

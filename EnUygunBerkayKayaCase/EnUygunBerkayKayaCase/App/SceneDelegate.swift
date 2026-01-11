@@ -23,13 +23,33 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         window = UIWindow(windowScene: windowScene)
         
-        let tabBarController = createTabBarController()
-        window?.rootViewController = tabBarController
-        window?.makeKeyAndVisible()
-        
-        setupBadgeUpdates(for: tabBarController)
+        showSplashScreen()
         
         logger.logLifecycle("Scene setup completed")
+    }
+    
+    // MARK: - Splash Screen
+    
+    private func showSplashScreen() {
+        let splashVC = SplashViewController()
+        
+        splashVC.onComplete = { [weak self] in
+            self?.showMainApp()
+        }
+        
+        window?.rootViewController = splashVC
+        window?.makeKeyAndVisible()
+    }
+    
+    private func showMainApp() {
+        let tabBarController = createTabBarController()
+        
+        UIView.transition(with: window!, duration: 0.3, options: .transitionCrossDissolve, animations: {
+            self.window?.rootViewController = tabBarController
+        }, completion: { [weak self] _ in
+            self?.setupBadgeUpdates(for: tabBarController)
+            Logger.shared.logLifecycle("Main app displayed")
+        })
     }
     
     // MARK: - TabBar Setup

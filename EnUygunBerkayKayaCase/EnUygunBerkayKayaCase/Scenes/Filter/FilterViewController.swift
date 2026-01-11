@@ -9,7 +9,7 @@ import UIKit
 import RxSwift
 import RxCocoa
 
-final class FilterViewController: UIViewController {
+final class FilterViewController: UIViewController, UITableViewDelegate {
     
     // MARK: - Properties
     private let viewModel: FilterViewModel
@@ -201,17 +201,13 @@ final class FilterViewController: UIViewController {
         
         Logger.shared.logUserAction("Filters reset and applied immediately")
     }
-}
-
-// MARK: - UITableViewDelegate
-
-extension FilterViewController: UITableViewDelegate {
     
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+    // MARK: - UITableViewDelegate
+    private func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         return "Select Category"
     }
     
-    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+    private func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
         let count = viewModel.categories.value.count
         return count > 0 ? "\(count) categories available" : nil
     }

@@ -10,10 +10,23 @@
 		F04F1BDB2F1277F4003F7965 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = F04F1BDA2F1277F4003F7965 /* Kingfisher */; };
 		F04F1BDE2F127906003F7965 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F04F1BDD2F127906003F7965 /* RxSwift */; };
 		F04F1BE02F12790F003F7965 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = F04F1BDF2F12790F003F7965 /* RxCocoa */; };
+		F04F1D8A2F12FA5F003F7965 /* RxBlocking in Frameworks */ = {isa = PBXBuildFile; productRef = F04F1D892F12FA5F003F7965 /* RxBlocking */; };
+		F04F1D8C2F12FA69003F7965 /* RxTest in Frameworks */ = {isa = PBXBuildFile; productRef = F04F1D8B2F12FA69003F7965 /* RxTest */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F04F1D742F12FA43003F7965 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F04F1B852F126835003F7965 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F04F1B8C2F126835003F7965;
+			remoteInfo = EnUygunBerkayKayaCase;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		F04F1B8D2F126835003F7965 /* EnUygunBerkayKayaCase.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EnUygunBerkayKayaCase.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F04F1D702F12FA43003F7965 /* EnUygunBerkayKayaCaseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EnUygunBerkayKayaCaseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -35,6 +48,11 @@
 			path = EnUygunBerkayKayaCase;
 			sourceTree = "<group>";
 		};
+		F04F1D712F12FA43003F7965 /* EnUygunBerkayKayaCaseTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = EnUygunBerkayKayaCaseTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,6 +66,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F04F1D6D2F12FA43003F7965 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F04F1D8C2F12FA69003F7965 /* RxTest in Frameworks */,
+				F04F1D8A2F12FA5F003F7965 /* RxBlocking in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -55,6 +82,7 @@
 			isa = PBXGroup;
 			children = (
 				F04F1B8F2F126835003F7965 /* EnUygunBerkayKayaCase */,
+				F04F1D712F12FA43003F7965 /* EnUygunBerkayKayaCaseTests */,
 				F04F1BDC2F127906003F7965 /* Frameworks */,
 				F04F1B8E2F126835003F7965 /* Products */,
 			);
@@ -64,6 +92,7 @@
 			isa = PBXGroup;
 			children = (
 				F04F1B8D2F126835003F7965 /* EnUygunBerkayKayaCase.app */,
+				F04F1D702F12FA43003F7965 /* EnUygunBerkayKayaCaseTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -103,6 +132,31 @@
 			productReference = F04F1B8D2F126835003F7965 /* EnUygunBerkayKayaCase.app */;
 			productType = "com.apple.product-type.application";
 		};
+		F04F1D6F2F12FA43003F7965 /* EnUygunBerkayKayaCaseTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F04F1D782F12FA43003F7965 /* Build configuration list for PBXNativeTarget "EnUygunBerkayKayaCaseTests" */;
+			buildPhases = (
+				F04F1D6C2F12FA43003F7965 /* Sources */,
+				F04F1D6D2F12FA43003F7965 /* Frameworks */,
+				F04F1D6E2F12FA43003F7965 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F04F1D752F12FA43003F7965 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F04F1D712F12FA43003F7965 /* EnUygunBerkayKayaCaseTests */,
+			);
+			name = EnUygunBerkayKayaCaseTests;
+			packageProductDependencies = (
+				F04F1D892F12FA5F003F7965 /* RxBlocking */,
+				F04F1D8B2F12FA69003F7965 /* RxTest */,
+			);
+			productName = EnUygunBerkayKayaCaseTests;
+			productReference = F04F1D702F12FA43003F7965 /* EnUygunBerkayKayaCaseTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -115,6 +169,10 @@
 				TargetAttributes = {
 					F04F1B8C2F126835003F7965 = {
 						CreatedOnToolsVersion = 16.4;
+					};
+					F04F1D6F2F12FA43003F7965 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = F04F1B8C2F126835003F7965;
 					};
 				};
 			};
@@ -137,12 +195,20 @@
 			projectRoot = "";
 			targets = (
 				F04F1B8C2F126835003F7965 /* EnUygunBerkayKayaCase */,
+				F04F1D6F2F12FA43003F7965 /* EnUygunBerkayKayaCaseTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		F04F1B8B2F126835003F7965 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F04F1D6E2F12FA43003F7965 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -159,7 +225,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F04F1D6C2F12FA43003F7965 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F04F1D752F12FA43003F7965 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F04F1B8C2F126835003F7965 /* EnUygunBerkayKayaCase */;
+			targetProxy = F04F1D742F12FA43003F7965 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		F04F1BA12F126835003F7965 /* Debug */ = {
@@ -339,6 +420,42 @@
 			};
 			name = Release;
 		};
+		F04F1D762F12FA43003F7965 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = T2Z6Q6SV9B;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mbk.EnUygunBerkayKayaCaseTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/EnUygunBerkayKayaCase.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/EnUygunBerkayKayaCase";
+			};
+			name = Debug;
+		};
+		F04F1D772F12FA43003F7965 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = T2Z6Q6SV9B;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = mbk.EnUygunBerkayKayaCaseTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/EnUygunBerkayKayaCase.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/EnUygunBerkayKayaCase";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -356,6 +473,15 @@
 			buildConfigurations = (
 				F04F1BA12F126835003F7965 /* Debug */,
 				F04F1BA22F126835003F7965 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F04F1D782F12FA43003F7965 /* Build configuration list for PBXNativeTarget "EnUygunBerkayKayaCaseTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F04F1D762F12FA43003F7965 /* Debug */,
+				F04F1D772F12FA43003F7965 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -396,6 +522,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F04F1BD82F1277B6003F7965 /* XCRemoteSwiftPackageReference "RxSwift" */;
 			productName = RxCocoa;
+		};
+		F04F1D892F12FA5F003F7965 /* RxBlocking */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F04F1BD82F1277B6003F7965 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxBlocking;
+		};
+		F04F1D8B2F12FA69003F7965 /* RxTest */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F04F1BD82F1277B6003F7965 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxTest;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
